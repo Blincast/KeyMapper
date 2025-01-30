@@ -158,6 +158,15 @@ class MyAccessibilityService :
         super.onCreate()
         Timber.i("Accessibility service: onCreate")
 
+        val packageName = "com.netflix.ninja"
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+
+        if (intent != null) {
+            startActivity(intent)
+        } else {
+            Timber.i("App not installed")
+        }
+
         lifecycleRegistry = LifecycleRegistry(this)
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
 
