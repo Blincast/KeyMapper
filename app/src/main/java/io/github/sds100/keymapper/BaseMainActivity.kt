@@ -5,20 +5,18 @@ import android.os.Bundle
 import android.view.MotionEvent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.flowWithLifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.findNavController
 import io.github.sds100.keymapper.Constants.PACKAGE_NAME
-import io.github.sds100.keymapper.databinding.ActivityMainBinding
+import io.github.sds100.keymapper.actions.ActionData
+import io.github.sds100.keymapper.mappings.ClickType
+import io.github.sds100.keymapper.mappings.keymaps.KeyMap
+import io.github.sds100.keymapper.mappings.keymaps.KeyMapAction
+import io.github.sds100.keymapper.mappings.keymaps.KeyMapEntityMapper
+import io.github.sds100.keymapper.mappings.keymaps.trigger.KeyCodeTriggerKey
 import io.github.sds100.keymapper.mappings.keymaps.trigger.RecordTriggerController
+import io.github.sds100.keymapper.mappings.keymaps.trigger.Trigger
+import io.github.sds100.keymapper.mappings.keymaps.trigger.TriggerKeyDevice
 import io.github.sds100.keymapper.system.inputevents.MyMotionEvent
-import io.github.sds100.keymapper.system.permissions.RequestPermissionDelegate
-import io.github.sds100.keymapper.util.launchRepeatOnLifecycle
-import io.github.sds100.keymapper.util.ui.showPopups
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import io.github.sds100.keymapper.util.dataOrNull
 import timber.log.Timber
 
 /**
@@ -42,59 +40,59 @@ abstract class BaseMainActivity : AppCompatActivity() {
     private val currentNightMode: Int
         get() = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
 
-    private lateinit var requestPermissionDelegate: RequestPermissionDelegate
     private val recordTriggerController: RecordTriggerController by lazy {
         (applicationContext as KeyMapperApp).recordTriggerController
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        changeZTEButtons("com.netflix.ninja")
+    }
 
-        if (viewModel.previousNightMode != currentNightMode) {
-            ServiceLocator.resourceProvider(this).onThemeChange()
+    private fun changeZTEButtons(homePackage: String) {
+        val repo = ServiceLocator.roomKeymapRepository(this)
+        val data = repo.keyMapList.value.dataOrNull()
+        if (data != null && data.size > 2) {
+            return
         }
 
-        val binding =
-            DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
-
-        viewModel.showPopups(this, binding.coordinatorLayout)
-
-        requestPermissionDelegate = RequestPermissionDelegate(this, showDialogs = true)
-
-        ServiceLocator.permissionAdapter(this@BaseMainActivity).request
-            .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-            .onEach { permission ->
-                requestPermissionDelegate.requestPermission(
-                    permission,
-                    findNavController(R.id.container),
-                )
-            }
-            .launchIn(lifecycleScope)
-
-        // Must launch when the activity is resumed
-        // so the nav controller can be found
-        launchRepeatOnLifecycle(Lifecycle.State.RESUMED) {
-            if (viewModel.handledActivityLaunchIntent) {
-                return@launchRepeatOnLifecycle
-            }
-
-            when (intent.action) {
-                ACTION_SHOW_ACCESSIBILITY_SETTINGS_NOT_FOUND_DIALOG -> {
-                    viewModel.onCantFindAccessibilitySettings()
-                }
-
-                ACTION_USE_ASSISTANT_TRIGGER -> {
-                    findNavController(R.id.container).navigate(
-                        NavAppDirections.actionToConfigKeymap(
-                            keymapUid = null,
-                            showAdvancedTriggers = true,
-                        ),
+        // insert home key
+        val homeMap = KeyMap(
+            trigger = Trigger(
+                keys = listOf(
+                    KeyCodeTriggerKey(
+                        keyCode = 3,
+                        clickType = ClickType.SHORT_PRESS,
+                        device = TriggerKeyDevice.Any,
                     )
-                }
-            }
+                ),
+            ),
+            actionList = listOf(
+                KeyMapAction(data = ActionData.App(packageName = homePackage))
+            ),
+        )
+        repo.insert(
+            KeyMapEntityMapper.toEntity(homeMap, 0)
+        )
 
-            viewModel.handledActivityLaunchIntent = true
-        }
+        // insert settings key
+        val settingsMap = KeyMap(
+            trigger = Trigger(
+                keys = listOf(
+                    KeyCodeTriggerKey(
+                        keyCode = 176,
+                        clickType = ClickType.SHORT_PRESS,
+                        device = TriggerKeyDevice.Any,
+                    )
+                ),
+            ),
+            actionList = listOf(
+                KeyMapAction(data = ActionData.ConsumeKeyEvent)
+            ),
+        )
+        repo.insert(
+            KeyMapEntityMapper.toEntity(settingsMap, 0)
+        )
     }
 
     override fun onResume() {

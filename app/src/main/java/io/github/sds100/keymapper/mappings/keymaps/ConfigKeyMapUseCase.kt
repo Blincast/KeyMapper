@@ -455,7 +455,9 @@ class ConfigKeyMapUseCaseImpl(
     }
 
     override fun save() {
+        // save
         val keyMap = mapping.value.dataOrNull() ?: return
+        println("Key map: $keyMap")
 
         if (keyMap.dbId == null) {
             keyMapRepository.insert(KeyMapEntityMapper.toEntity(keyMap, 0))

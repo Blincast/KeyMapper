@@ -1,6 +1,7 @@
 package io.github.sds100.keymapper.mappings.keymaps
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.Lifecycle
@@ -26,6 +27,7 @@ import io.github.sds100.keymapper.util.ui.TwoFragments
 import io.github.sds100.keymapper.util.ui.setupNavigation
 import io.github.sds100.keymapper.util.ui.showPopups
 import kotlinx.coroutines.flow.collectLatest
+import timber.log.Timber
 
 /**
  * Created by sds100 on 22/11/20.
@@ -56,6 +58,7 @@ class ConfigKeyMapFragment : ConfigMappingFragment() {
             }
         }
 
+        Timber.tag("CONFIG KEY MAP").d("setting up navigation")
         viewModel.configTriggerViewModel.setupNavigation(this)
 
         setFragmentResultListener(ConfigConstraintsFragment.CHOOSE_CONSTRAINT_REQUEST_KEY) { _, result ->

@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 open class KeyMapListViewModel(
     private val coroutineScope: CoroutineScope,
@@ -65,6 +66,8 @@ open class KeyMapListViewModel(
     var showDpadTriggerSetupBottomSheet: Boolean by mutableStateOf(false)
 
     init {
+        Timber.tag("KEY MAP LIST VIEW MODEL").d("setting up navigation, hopefully main?")
+
         val keyMapStateListFlow =
             MutableStateFlow<State<List<KeyMapListItem.KeyMapUiState>>>(State.Loading)
 
@@ -78,6 +81,7 @@ open class KeyMapListViewModel(
 
             keyMapStateListFlow.value = keyMapListState.mapData { keyMapList ->
                 keyMapList.map { keyMap ->
+                    Timber.tag("KEY MAP LIST").d(keyMap.toString())
                     listItemCreator.create(keyMap, showDeviceDescriptors)
                 }
             }

@@ -27,6 +27,7 @@ import splitties.alertdialog.appcompat.negativeButton
 import splitties.alertdialog.appcompat.positiveButton
 import splitties.alertdialog.appcompat.titleResource
 import splitties.alertdialog.material.materialAlertDialog
+import timber.log.Timber
 
 /**
  * Created by sds100 on 17/01/21.
