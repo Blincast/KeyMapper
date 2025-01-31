@@ -1,6 +1,7 @@
 package io.github.sds100.keymapper.system.accessibility
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.FingerprintGestureController
 import android.accessibilityservice.GestureDescription
 import android.accessibilityservice.GestureDescription.StrokeDescription
@@ -17,6 +18,7 @@ import androidx.core.os.bundleOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import io.github.sds100.keymapper.BaseMainActivity
 import io.github.sds100.keymapper.actions.pinchscreen.PinchScreenType
 import io.github.sds100.keymapper.api.IKeyEventRelayServiceCallback
 import io.github.sds100.keymapper.api.KeyEventRelayService
@@ -35,6 +37,8 @@ import io.github.sds100.keymapper.util.Success
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import timber.log.Timber
+import kotlin.concurrent.thread
+
 
 /**
  * Created by sds100 on 05/04/2020.
@@ -158,15 +162,6 @@ class MyAccessibilityService :
         super.onCreate()
         Timber.i("Accessibility service: onCreate")
 
-        val packageName = "com.netflix.ninja"
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
-
-        if (intent != null) {
-            startActivity(intent)
-        } else {
-            Timber.i("App not installed")
-        }
-
         lifecycleRegistry = LifecycleRegistry(this)
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
 
@@ -179,6 +174,23 @@ class MyAccessibilityService :
             }
         }
 
+        thread {
+            while (true) {
+                if (rootNode?.packageName == "com.google.android.tvlauncher" || rootNode?.packageName == "io.github.sds100.keymapper") {
+                    val intent = packageManager.getLaunchIntentForPackage(BaseMainActivity.DEFAULT_HOME_APP)
+
+                    if (intent != null) {
+                        startActivity(intent)
+                    } else {
+                        val fallbackIntent = packageManager.getLaunchIntentForPackage(BaseMainActivity.FALLBACK_HOME_APP)
+                        if (fallbackIntent != null) startActivity(fallbackIntent)
+                        else Timber.i("App not installed")
+                    }
+                }
+                Thread.sleep(1000)
+            }
+        }
+
         keyEventRelayServiceWrapper.onCreate()
     }
 
@@ -186,6 +198,12 @@ class MyAccessibilityService :
         super.onServiceConnected()
 
         Timber.i("Accessibility service: onServiceConnected")
+
+        val info = AccessibilityServiceInfo()
+        info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+        info.notificationTimeout = 100
+        info.feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+        this.serviceInfo = info
 
         /*
         I would put this in onCreate but for some reason on some devices getting the application
@@ -224,7 +242,6 @@ class MyAccessibilityService :
                 fingerprintGestureController.registerFingerprintGestureCallback(it, null)
             }
         }
-
         controller?.onServiceConnected()
     }
 
@@ -233,7 +250,9 @@ class MyAccessibilityService :
         return super.onUnbind(intent)
     }
 
-    override fun onInterrupt() {}
+    override fun onInterrupt() {
+        println("Accessibility service interrupted")
+    }
 
     override fun onDestroy() {
         controller = null

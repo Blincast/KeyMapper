@@ -168,6 +168,7 @@ class AccessibilityServiceAdapter(
     }
 
     override fun stop(): Boolean {
+        Timber.i("Stopped")
         coroutineScope.launch {
             disableServiceSuspend()
         }
