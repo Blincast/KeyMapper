@@ -19,6 +19,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import io.github.sds100.keymapper.BaseMainActivity
+import io.github.sds100.keymapper.UsageLogger
 import io.github.sds100.keymapper.actions.pinchscreen.PinchScreenType
 import io.github.sds100.keymapper.api.IKeyEventRelayServiceCallback
 import io.github.sds100.keymapper.api.KeyEventRelayService
@@ -38,6 +39,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import timber.log.Timber
 import kotlin.concurrent.thread
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 
 /**
@@ -175,7 +180,11 @@ class MyAccessibilityService :
         }
 
         thread {
+            val usageLogger = UsageLogger(this)
+            val sleepTime: Long = 5.seconds.toLong(DurationUnit.MILLISECONDS)
             while (true) {
+                rootNode?.let { usageLogger.update(it) }
+                // open blincast launcher if we are on the default launcher
                 if (rootNode?.packageName == "com.google.android.tvlauncher" || rootNode?.packageName == "io.github.sds100.keymapper") {
                     val intent = packageManager.getLaunchIntentForPackage(BaseMainActivity.DEFAULT_HOME_APP)
 
@@ -187,7 +196,7 @@ class MyAccessibilityService :
                         else Timber.i("App not installed")
                     }
                 }
-                Thread.sleep(1000)
+                Thread.sleep(sleepTime)
             }
         }
 
