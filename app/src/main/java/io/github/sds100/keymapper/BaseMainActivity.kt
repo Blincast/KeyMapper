@@ -26,9 +26,6 @@ import timber.log.Timber
 abstract class BaseMainActivity : AppCompatActivity() {
 
     companion object {
-        const val DEFAULT_HOME_APP = "com.blincast.streamblink"
-        const val FALLBACK_HOME_APP = "com.example.webviewtemplate"
-
         const val ACTION_SHOW_ACCESSIBILITY_SETTINGS_NOT_FOUND_DIALOG =
             "$PACKAGE_NAME.ACTION_SHOW_ACCESSIBILITY_SETTINGS_NOT_FOUND_DIALOG"
 
@@ -53,33 +50,11 @@ abstract class BaseMainActivity : AppCompatActivity() {
     }
 
     private fun changeZTEButtons() {
-        val homePackage = if (packageManager.getLaunchIntentForPackage(DEFAULT_HOME_APP) != null)
-            DEFAULT_HOME_APP else FALLBACK_HOME_APP
-
         val repo = ServiceLocator.roomKeymapRepository(this)
         val data = repo.keyMapList.value.dataOrNull()
         if (data != null && data.size > 2) {
             return
         }
-
-        // insert home key
-        val homeMap = KeyMap(
-            trigger = Trigger(
-                keys = listOf(
-                    KeyCodeTriggerKey(
-                        keyCode = 3,
-                        clickType = ClickType.SHORT_PRESS,
-                        device = TriggerKeyDevice.Any,
-                    )
-                ),
-            ),
-            actionList = listOf(
-                KeyMapAction(data = ActionData.App(packageName = homePackage))
-            ),
-        )
-        repo.insert(
-            KeyMapEntityMapper.toEntity(homeMap, 0)
-        )
 
         // insert settings key
         val settingsMap = KeyMap(

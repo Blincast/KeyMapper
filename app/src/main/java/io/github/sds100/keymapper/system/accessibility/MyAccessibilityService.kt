@@ -19,7 +19,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import io.github.sds100.keymapper.BaseMainActivity
-import io.github.sds100.keymapper.UsageLogger
 import io.github.sds100.keymapper.actions.pinchscreen.PinchScreenType
 import io.github.sds100.keymapper.api.IKeyEventRelayServiceCallback
 import io.github.sds100.keymapper.api.KeyEventRelayService
@@ -176,27 +175,6 @@ class MyAccessibilityService :
                     SHOW_MODE_AUTO -> _isKeyboardHidden.value = false
                     SHOW_MODE_HIDDEN -> _isKeyboardHidden.value = true
                 }
-            }
-        }
-
-        thread {
-            val usageLogger = UsageLogger(this)
-            val sleepTime: Long = 5.seconds.toLong(DurationUnit.MILLISECONDS)
-            while (true) {
-                rootNode?.let { usageLogger.update(it) }
-                // open blincast launcher if we are on the default launcher
-                if (rootNode?.packageName == "com.google.android.tvlauncher" || rootNode?.packageName == "io.github.sds100.keymapper") {
-                    val intent = packageManager.getLaunchIntentForPackage(BaseMainActivity.DEFAULT_HOME_APP)
-
-                    if (intent != null) {
-                        startActivity(intent)
-                    } else {
-                        val fallbackIntent = packageManager.getLaunchIntentForPackage(BaseMainActivity.FALLBACK_HOME_APP)
-                        if (fallbackIntent != null) startActivity(fallbackIntent)
-                        else Timber.i("App not installed")
-                    }
-                }
-                Thread.sleep(sleepTime)
             }
         }
 
