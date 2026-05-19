@@ -52,7 +52,7 @@ abstract class BaseMainActivity : AppCompatActivity() {
     private fun changeZTEButtons() {
         val repo = ServiceLocator.roomKeymapRepository(this)
         val data = repo.keyMapList.value.dataOrNull()
-        if (data != null && data.size > 2) {
+        if (data != null && data.size > 3) {
             return
         }
 
@@ -73,6 +73,25 @@ abstract class BaseMainActivity : AppCompatActivity() {
         )
         repo.insert(
             KeyMapEntityMapper.toEntity(settingsMap, 0)
+        )
+
+        // block long press on power button
+        val powerLongPressMap = KeyMap(
+            trigger = Trigger(
+                keys = listOf(
+                    KeyCodeTriggerKey(
+                        keyCode = 26,
+                        clickType = ClickType.LONG_PRESS,
+                        device = TriggerKeyDevice.Any,
+                    )
+                ),
+            ),
+            actionList = listOf(
+                KeyMapAction(data = ActionData.ConsumeKeyEvent)
+            ),
+        )
+        repo.insert(
+            KeyMapEntityMapper.toEntity(powerLongPressMap, 0)
         )
     }
 
